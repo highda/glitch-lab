@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GLITCH LAB</title>
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<div class="app">
+  <div class="header">
+    <div class="logo"><span>▓</span> GLITCH<span>LAB</span></div>
+    <div class="header-controls">
+      <button id="btn-live" class="active" onclick="window._gl.toggleLive()">● Live</button>
+      <button id="btn-render" class="accent2" onclick="window._gl.requestRender()">Render</button>
+      <button onclick="window._gl.resetZoom()">Fit</button>
+      <button onclick="window._gl.exportImage()">Export</button>
+      <button onclick="document.getElementById('file-input').click()">Load</button>
+      <input type="file" id="file-input" accept="image/*" style="display:none"
+             onchange="window._gl.handleFile(event)">
+    </div>
+  </div>
+
+  <div class="canvas-area" id="canvas-area">
+    <div class="drop-zone" id="drop-zone"
+         ondragover="event.preventDefault(); this.classList.add('dragover')"
+         ondragleave="this.classList.remove('dragover')"
+         ondrop="window._gl.handleDrop(event)"
+         onclick="document.getElementById('file-input').click()">
+      <div class="icon">◈</div>
+      <div>Drop image or click to load</div>
+    </div>
+    <canvas id="canvas" style="display:none"></canvas>
+    <div class="zoom-indicator" id="zoom-indicator" style="display:none">100%</div>
+  </div>
+
+  <div class="sidebar">
+    <div class="sidebar-header">
+      <h2>Effect Stack</h2>
+      <span id="fx-count" style="font-size:10px;color:var(--accent)">0</span>
+    </div>
+    <div class="stack-list" id="stack-list"></div>
+    <div class="add-panel">
+      <select id="add-select" onchange="window._gl.addEffect(this.value); this.value=''">
+        <option value="">+ Add Effect…</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="status-bar">
+    <div>
+      <span class="live-dot" id="live-dot"></span>
+      <span id="status-text">Ready</span>
+    </div>
+    <div>Render: <span class="render-time" id="render-time">—</span></div>
+  </div>
+</div>
+
+<script type="module" src="js/app.js"></script>
+</body>
+</html>
