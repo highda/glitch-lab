@@ -28,6 +28,7 @@
       "buildResources": "icons",
       "output": "release"
     },
+    "afterPack": "desktop/after-pack.cjs",
     "mac": {
       "category": "public.app-category.graphics-design",
       "icon": "icons",
