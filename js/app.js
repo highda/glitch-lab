@@ -64,3 +64,9 @@ for (const cat of EFFECT_GROUPS) {
 
 // ─── Init ───
 renderStack();
+
+if ('serviceWorker' in navigator && /^https?:$/.test(location.protocol)) {
+  navigator.serviceWorker.register('./sw.js').catch((error) => {
+    console.warn('Service worker registration failed:', error);
+  });
+}

@@ -9,6 +9,8 @@ export const state = {
   rendering: false,
   uid: 0,
   renderTimer: null,
+  renderSeq: 0,
+  latestRenderSeq: 0,
 
   // Zoom & pan
   zoom: 1,

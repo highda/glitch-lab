@@ -1,0 +1,58 @@
+{
+  "name": "glitch-lab",
+  "version": "0.1.0",
+  "description": "A standalone glitch art tool for destructive image effects.",
+  "author": "highda",
+  "private": false,
+  "type": "module",
+  "main": "desktop/main.cjs",
+  "scripts": {
+    "dev": "node scripts/serve-static.mjs",
+    "start": "electron .",
+    "dist": "electron-builder"
+  },
+  "build": {
+    "appId": "io.github.highda.glitchlab",
+    "productName": "GLITCH LAB",
+    "files": [
+      "index.html",
+      "css/**/*",
+      "js/**/*",
+      "icons/**/*",
+      "manifest.webmanifest",
+      "sw.js",
+      "desktop/**/*",
+      "package.json"
+    ],
+    "directories": {
+      "buildResources": "icons",
+      "output": "release"
+    },
+    "mac": {
+      "category": "public.app-category.graphics-design",
+      "icon": "icons",
+      "target": [
+        "dmg",
+        "zip"
+      ]
+    },
+    "win": {
+      "icon": "icons/icon.ico",
+      "target": [
+        "nsis",
+        "zip"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage",
+        "tar.gz"
+      ],
+      "category": "Graphics"
+    }
+  },
+  "devDependencies": {
+    "electron": "^31.7.7",
+    "electron-builder": "^24.13.3"
+  }
+}

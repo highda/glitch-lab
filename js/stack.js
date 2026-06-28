@@ -124,7 +124,7 @@ export function renderStack() {
           <div class="param-row">
             <span class="param-label">${p.label}</span>
             <input type="text" value="${fx.params[p.key]}" maxlength="8" pattern="[01]*"
-                   style="flex:1;font-family:'IBM Plex Mono',monospace;font-size:11px;background:var(--bg);color:var(--accent2);border:1px solid var(--border);padding:3px 6px;letter-spacing:2px;text-align:center"
+                   style="flex:1;font-family:var(--font-mono);font-size:11px;background:var(--bg);color:var(--accent2);border:1px solid var(--border);padding:3px 6px;letter-spacing:2px;text-align:center"
                    oninput="this.value=this.value.replace(/[^01]/g,'');window._gl.updateParam(${fx.id}, '${p.key}', this.value)">
           </div>`;
       } else if (p.type === 'select') {

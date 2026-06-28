@@ -1,6 +1,6 @@
 # GLITCH LAB
 
-A browser-based glitch art tool for applying destructive image effects in real-time. No server, no build step — just static files served over HTTP.
+A browser-based glitch art tool for applying destructive image effects in real-time. It runs as a static web app, can install as a PWA, and can be packaged as a desktop app.
 
 ## What it does
 
@@ -78,6 +78,9 @@ A browser-based glitch art tool for applying destructive image effects in real-t
 Serve the project root with any static HTTP server:
 
 ```bash
+# Project script
+npm run dev
+
 # Python
 python -m http.server 8000
 
@@ -92,8 +95,26 @@ Then open `http://localhost:8000` in a browser.
 
 > **Note:** ES modules require HTTP — `file://` won't work due to CORS restrictions.
 
+## Desktop builds
+
+Install dependencies and run the Electron shell locally:
+
+```bash
+npm install
+npm start
+```
+
+Create distributable desktop builds:
+
+```bash
+npm run dist
+```
+
+Tagged releases (`v*`) build macOS and Windows artifacts through GitHub Actions and attach them to the GitHub release.
+
 ## Tech stack
 
 - Vanilla HTML/CSS/JS (ES modules, no framework)
 - Canvas 2D API for pixel manipulation
+- Web Worker render pipeline for off-main-thread effect chains where supported
 - Dynamic `import()` for lazy-loading effect modules

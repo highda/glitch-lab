@@ -7,6 +7,7 @@ import { scheduleRender } from './render.js';
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
 const MAX_DIM = 1200;
+let activeObjectUrl = null;
 
 export function handleFile(e) {
   const file = e.target.files[0];
@@ -22,7 +23,10 @@ export function handleDrop(e) {
 
 function loadImage(file) {
   const img = new Image();
+  const objectUrl = URL.createObjectURL(file);
   img.onload = () => {
+    if (activeObjectUrl) URL.revokeObjectURL(activeObjectUrl);
+    activeObjectUrl = objectUrl;
     let w = img.width, h = img.height;
     if (w > MAX_DIM || h > MAX_DIM) {
       const ratio = Math.min(MAX_DIM / w, MAX_DIM / h);
@@ -40,7 +44,11 @@ function loadImage(file) {
     resetZoom();
     scheduleRender();
   };
-  img.src = URL.createObjectURL(file);
+  img.onerror = () => {
+    URL.revokeObjectURL(objectUrl);
+    document.getElementById('status-text').textContent = 'Image load failed';
+  };
+  img.src = objectUrl;
 }
 
 export function exportImage() {

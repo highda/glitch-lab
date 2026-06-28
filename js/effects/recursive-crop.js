@@ -1,6 +1,8 @@
 // Recursive Crop — places progressively smaller copies of the full image
 // into itself at an anchor point (Droste-like). Single-pass, deterministic.
 
+import { createScratchCanvas } from './canvas-util.js';
+
 export default {
   name: 'Recursive Crop',
   badge: 'META',
@@ -15,8 +17,7 @@ export default {
   ],
   apply(src, p, w, h) {
     // Use an offscreen canvas for scaling — much faster than manual bilinear
-    const canvas = document.createElement('canvas');
-    canvas.width = w; canvas.height = h;
+    const canvas = createScratchCanvas(w, h);
     const ctx = canvas.getContext('2d');
 
     // Put original image on canvas
@@ -29,8 +30,7 @@ export default {
     const anchorNY = p.anchorY / 100;
 
     // Prepare a single temp canvas with the original for drawing copies
-    const tmp = document.createElement('canvas');
-    tmp.width = w; tmp.height = h;
+    const tmp = createScratchCanvas(w, h);
     tmp.getContext('2d').putImageData(imgData, 0, 0);
 
     // Track the bounds of each nesting level.

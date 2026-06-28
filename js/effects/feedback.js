@@ -1,3 +1,5 @@
+import { createScratchCanvas } from './canvas-util.js';
+
 export default {
   name: 'Feedback',
   badge: 'META',
@@ -10,8 +12,7 @@ export default {
     { key: 'alpha', label: 'Mix', min: 5, max: 95, step: 1, def: 50 },
   ],
   apply(src, p, w, h) {
-    const tc = document.createElement('canvas');
-    tc.width = w; tc.height = h;
+    const tc = createScratchCanvas(w, h);
     const tctx = tc.getContext('2d');
     tctx.putImageData(new ImageData(new Uint8ClampedArray(src), w, h), 0, 0);
 
@@ -19,8 +20,7 @@ export default {
     const angle = p.rotation * Math.PI / 180;
 
     for (let iter = 0; iter < p.iterations; iter++) {
-      const tc2 = document.createElement('canvas');
-      tc2.width = w; tc2.height = h;
+      const tc2 = createScratchCanvas(w, h);
       const tctx2 = tc2.getContext('2d');
       tctx2.drawImage(tc, 0, 0);
       tctx2.globalAlpha = p.alpha / 100;

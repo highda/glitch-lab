@@ -1,10 +1,28 @@
 // Async rendering engine — applies the effect stack to the source image.
 
 import { state } from './state.js';
-import { getEffect } from './effects/registry.js';
+import { renderEffectStack } from './render-engine.js';
 
 const canvas = document.getElementById('canvas');
 const ctx = canvas.getContext('2d', { willReadFrequently: true });
+const statusText = document.getElementById('status-text');
+const renderTime = document.getElementById('render-time');
+let renderWorker = null;
+let workerFailed = false;
+
+function getRenderWorker() {
+  if (workerFailed || typeof Worker === 'undefined') return null;
+  if (!renderWorker) {
+    try {
+      renderWorker = new Worker(new URL('./render-worker.js', import.meta.url), { type: 'module' });
+    } catch (error) {
+      workerFailed = true;
+      console.warn('Worker renderer unavailable; falling back to main thread.', error);
+      return null;
+    }
+  }
+  return renderWorker;
+}
 
 export function scheduleRender() {
   if (!state.sourceImage) return;
@@ -13,7 +31,7 @@ export function scheduleRender() {
     state.renderTimer = setTimeout(doRender, 30);
   } else {
     state.renderPending = true;
-    document.getElementById('status-text').textContent = 'Pending…';
+    statusText.textContent = 'Pending...';
   }
 }
 
@@ -28,31 +46,88 @@ export async function doRender() {
   state.renderPending = false;
   const t0 = performance.now();
   const w = state.sourceImage.width, h = state.sourceImage.height;
+  const seq = ++state.renderSeq;
+  state.latestRenderSeq = seq;
+  const stack = state.effectStack.map(fx => ({
+    id: fx.id,
+    type: fx.type,
+    params: { ...fx.params },
+    enabled: fx.enabled,
+  }));
 
-  let data = new Uint8ClampedArray(state.sourceData);
+  try {
+    const worker = getRenderWorker();
+    let result;
+    if (worker) {
+      try {
+        result = await renderInWorker(worker, seq, new Uint8ClampedArray(state.sourceData), stack, w, h);
+      } catch (error) {
+        workerFailed = true;
+        console.warn('Worker render failed; retrying on main thread.', error);
+        result = await renderEffectStack(new Uint8ClampedArray(state.sourceData), stack, w, h);
+      }
+    } else {
+      result = await renderEffectStack(new Uint8ClampedArray(state.sourceData), stack, w, h);
+    }
 
-  for (const fx of state.effectStack) {
-    if (!fx.enabled) continue;
-    try {
-      const def = await getEffect(fx.type);
-      const result = def.apply(data, fx.params, w, h);
-      data = (result instanceof Promise) ? await result : result;
-    } catch (e) {
-      console.warn(`Effect ${fx.type} failed:`, e);
+    if (seq === state.latestRenderSeq) {
+      ctx.putImageData(new ImageData(result.data, w, h), 0, 0);
+      showRenderStatus(result.errors || [], performance.now() - t0);
+    }
+  } catch (error) {
+    workerFailed = true;
+    console.warn('Render failed:', error);
+    statusText.textContent = 'Render failed';
+  } finally {
+    state.rendering = false;
+
+    if (state.renderPending && state.liveMode) {
+      state.renderPending = false;
+      doRender();
     }
   }
+}
 
-  ctx.putImageData(new ImageData(data, w, h), 0, 0);
+function renderInWorker(worker, seq, sourceData, effectStack, width, height) {
+  return new Promise((resolve, reject) => {
+    const cleanup = () => {
+      worker.removeEventListener('message', onMessage);
+      worker.removeEventListener('error', onError);
+    };
+    const onMessage = (event) => {
+      if (event.data.seq !== seq) return;
+      cleanup();
+      if (event.data.ok) {
+        resolve({ data: event.data.data, errors: event.data.errors || [] });
+      } else {
+        reject(new Error(event.data.error || 'Worker render failed.'));
+      }
+    };
+    const onError = (event) => {
+      cleanup();
+      reject(event.error || new Error(event.message || 'Worker render failed.'));
+    };
 
-  const elapsed = (performance.now() - t0).toFixed(1);
-  document.getElementById('render-time').textContent = elapsed + 'ms';
-  document.getElementById('status-text').textContent =
-    state.effectStack.filter(f => f.enabled).length + ' effects applied';
-  state.rendering = false;
+    worker.addEventListener('message', onMessage);
+    worker.addEventListener('error', onError);
+    worker.postMessage({
+      seq,
+      sourceData,
+      effectStack,
+      width,
+      height,
+    }, [sourceData.buffer]);
+  });
+}
 
-  if (state.renderPending && state.liveMode) {
-    state.renderPending = false;
-    doRender();
+function showRenderStatus(errors, elapsedMs) {
+  renderTime.textContent = elapsedMs.toFixed(1) + 'ms';
+  const applied = state.effectStack.filter(f => f.enabled).length;
+  if (errors.length > 0) {
+    const names = errors.map(error => error.type).join(', ');
+    statusText.textContent = `${applied} effects applied; failed: ${names}`;
+  } else {
+    statusText.textContent = applied + ' effects applied';
   }
 }
 
